@@ -9,6 +9,14 @@ from constants import BLUE, YELLOW, RED, GREEN
 from ScoreManager import ScoreManager
 from SecondMenu import SecondMenu
 
+import redditwarp.SYNC
+
+# redditwarp client init
+REDDIT_CLIENT = redditwarp.SYNC.Client()
+
+# def subreddit and num of posts
+subreddit_name = 'temple'
+limit_amount = 5
 
 pygame.init()
 pygame.mixer.init() # initialize pygame mixer for music
@@ -62,6 +70,93 @@ credits_rect1 = credits_text1.get_rect(center=(Width // 2, 650))
 credits_text2 = credits_font.render(credits2, True, (255, 255, 255))
 credits_rect2 = credits_text2.get_rect(center=(Width // 2, 670))
 
+# logic for the subreddit posts
+def fetch_subreddit_news(subreddit_name, limit):
+    posts = []
+    try:
+        submissions = REDDIT_CLIENT.p.subreddit.pull.new(subreddit_name, amount=limit)
+        posts = [
+            {
+            'title': subm.title,
+            'score': subm.score,
+            'url': subm.url
+            }
+            for subm in submissions
+        ]
+    except Exception as e:
+        # error msg if API call fails
+        posts = [{"title": f"Error fetching news from r/{subreddit_name}.", "score": "ERROR"}]
+    return posts
+
+
+def show_subreddit_news():
+    # displays pop-up window with recent submissions from the specified sub
+
+    news_posts = fetch_subreddit_news(subreddit_name, limit_amount)
+
+    news_screen = pygame.display.set_mode([Width, Height])
+    # blit background and title info to keep the screen context
+    news_screen.blit(background_image, (0, 0))
+    news_screen.blit(title_text, title_rect)
+    news_screen.blit(message_text, message_rect)
+
+    # pop-up box
+    box_width, box_height = 700, 500
+    box_x = (Width - box_width) // 2
+    box_y = (Height - box_height) // 2
+    popup_rect = pygame.Rect(box_x, box_y, box_width, box_height)
+
+    # draw pop-up background
+    pygame.draw.rect(news_screen, (50, 50, 50), popup_rect)  # Dark grey background
+    pygame.draw.rect(news_screen, (255, 255, 255), popup_rect, 3)  # White border
+
+    # pop-up title
+    popup_font_large = pygame.font.Font(None, 40)
+    popup_title_text = popup_font_large.render(f"Recent Posts from r/{subreddit_name.capitalize()}", True, (255, 255, 255))
+    popup_title_rect = popup_title_text.get_rect(center=(Width // 2, box_y + 30))
+    news_screen.blit(popup_title_text, popup_title_rect)
+
+    # draw the posts
+    popup_font_small = pygame.font.Font(None, 24)
+    start_y = box_y + 70
+    line_height = 40
+
+    for i, post in enumerate(news_posts):
+        post_y = start_y + i * line_height
+        # Draw only if it fits inside the pop-up box
+        if post_y < box_y + box_height - 50: 
+            # Display score and title
+            score_text = popup_font_small.render(f"[{post['score']}]", True, (255, 255, 0)) # Yellow score
+            title_text_surface = popup_font_small.render(post['title'], True, (200, 200, 255)) # Light blue title
+            
+            # Blit score (left-aligned)
+            news_screen.blit(score_text, (box_x + 20, post_y))
+            # Blit title (right of score)
+            news_screen.blit(title_text_surface, (box_x + 90, post_y))
+        
+    # exit button to return to menu
+    exit_button_font = pygame.font.Font(None, 32)
+    exit_button_text = exit_button_font.render("Exit News Feed", True, (255, 255, 255))
+    exit_button_rect = exit_button_text.get_rect(center=(Width // 2, box_y + box_height - 30))
+    pygame.draw.rect(news_screen, (64, 64, 64), exit_button_rect.inflate(20, 10))
+    news_screen.blit(exit_button_text, exit_button_rect)
+
+    pygame.display.flip()
+
+    # pop-up event loop (prevents returning to main menu until closed)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if exit_button_rect.collidepoint(event.pos):
+                    return  # Exit pop-up and return to menu
+            elif event.type == SONG_END:
+                music_loop()
+
+
+
 second_menu_instance = SecondMenu(tracks)
 def main():
     """
@@ -77,13 +172,19 @@ def main():
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 buttons = menu_buttons()
-                if buttons[0].collidepoint(event.pos): # If Start Game button is clicked, show the second menu
-                   second_menu_instance.start_game_menu()
-                if buttons[2].collidepoint(event.pos): # if mouse is clicked on tutorial button
+                start_game_rect, settings_rect, tutorial_rect, leaderboard_rect, customize_rect, news_rect = buttons
+
+                if start_game_rect.collidepoint(event.pos): # If Start Game button is clicked
+                    second_menu_instance.start_game_menu()
+                elif tutorial_rect.collidepoint(event.pos): # if mouse is clicked on tutorial button
                     tutorial()
-                elif buttons[1].collidepoint(event.pos): # if mouse is clicked on settings button
+                elif settings_rect.collidepoint(event.pos): # if mouse is clicked on settings button
                     settings()
-                elif buttons[4].collidepoint(event.pos): # if mouse is clicked on leaderboard button (not yet implemented)
+                elif leaderboard_rect.collidepoint(event.pos): # if mouse is clicked on leaderboard button
+                    show_leaderboard() # Use the existing function
+                elif news_rect.collidepoint(event.pos): # ** NEW CHECK **
+                    show_subreddit_news() # Call the new function
+                elif customize_rect.collidepoint(event.pos): # if mouse is clicked on board customization
                     board_customization()
                 # Check if the current song has finished, loop to next song
             elif event.type == SONG_END:
@@ -218,6 +319,30 @@ def menu_buttons():
     pygame.draw.rect(screen, color, pygame.Rect(position, size))
     screen.blit(button_text, button_text_rect)
 
+    # news feed button (new button)
+    news_icon = pygame.image.load('pics/news_icon.png') # You'll need an image named 'news_icon.png'
+    position = (Width // 2 - 150, Height // 3 + 285)  # Use the old 'Customize Board' position
+    size = (300, 50)  # width, height
+
+    button_text = button_font.render("Subreddit News", True, (255, 255, 255)) # Button text
+    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 310))
+
+    news_icon_resized = pygame.transform.scale(news_icon, icon_size)
+    news_icon_rect = news_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 285 + (button_height - icon_size[1]) // 2))
+
+    # Draw button and handle hover
+    mouse = pygame.mouse.get_pos()
+    button_rect_6 = pygame.Rect(position, size)
+    if button_rect_6.collidepoint(mouse):
+        pygame.draw.rect(screen, cursor_color, button_rect_6)
+    else:
+        pygame.draw.rect(screen, color, button_rect_6)
+
+    screen.blit(news_icon_resized, news_icon_rect.topleft)
+    screen.blit(button_text, button_text_rect)
+
+
+
     # Draw the icon next to the text with the specified size
     leaderboard_icon_resized = pygame.transform.scale(leaderboard_icon, icon_size)
     leaderboard_icon_rect = leaderboard_icon_resized.get_rect(
@@ -244,18 +369,18 @@ def menu_buttons():
 
     color = (128, 128, 128) # grey
     cursor_color = (100, 100, 100) # darker grey
-    position = (Width // 2 - 150, Height // 3 + 285)  # Adjust the vertical position as needed
+    position = (Width // 2 - 150, Height // 3 + 360)  # Adjust the vertical position as needed
     size = (300, 50)  # width, height
 
     button_font = pygame.font.Font(None, 32)
     button_text = button_font.render("Customize Board", True, (255, 255, 255)) # Button text and color
-    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 310))  # Adjust the vertical position as needed
+    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 385))  # Adjust the vertical position as needed
     pygame.draw.rect(screen, color, pygame.Rect(position, size))
     screen.blit(button_text, button_text_rect)
 
     # Draw the icon next to the text with the specified size
     board_icon_resized = pygame.transform.scale(board_icon, icon_size)
-    board_icon_rect = board_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 285 + (button_height - icon_size[1]) // 2))
+    board_icon_rect = board_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 360 + (button_height - icon_size[1]) // 2))
 
     pygame.draw.rect(screen, color, pygame.Rect(position, size))
     screen.blit(button_text, button_text_rect)
@@ -271,7 +396,7 @@ def menu_buttons():
     screen.blit(board_icon_resized, board_icon_rect.topleft)  # Draw the icon after drawing the button
     screen.blit(button_text, button_text_rect)
 
-    return button_rect, button_rect_2, button_rect_3, button_rect_4, button_rect_5
+    return button_rect, button_rect_2, button_rect_3, button_rect_4, button_rect_5, button_rect_6 # rect 6 is news button
 
 def tutorial(): 
     """
