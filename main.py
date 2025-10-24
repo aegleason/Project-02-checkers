@@ -171,7 +171,7 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                start_game_rect, settings_rect, tutorial_rect, leaderboard_rect, customize_rect, news_rect = menu_buttons()
+                start_game_rect, settings_rect, tutorial_rect, leaderboard_rect, news_rect, customize_rect = menu_buttons()
 
                 if start_game_rect.collidepoint(event.pos): # If Start Game button is clicked
                     second_menu_instance.start_game_menu()
@@ -204,9 +204,6 @@ def main():
     pygame.quit()
 
 def menu_buttons():
-    """
-    The menu buttons function creates the buttons on the main menu. It returns the button rectangles for each button so that they can be used in the main function.
-    """
     # Used for buttons w/ images
     icon_size = (45, 45)  # Adjust the size of the icon as needed
     button_height = 50
@@ -230,7 +227,6 @@ def menu_buttons():
         pygame.draw.rect(screen, cursor_color, button_rect)
     else:
         pygame.draw.rect(screen, color, button_rect)
-
     screen.blit(button_text, button_text_rect)
     screen.blit(startgame_icon_resized, startgame_icon_rect.topleft)
 
@@ -248,7 +244,6 @@ def menu_buttons():
         pygame.draw.rect(screen, cursor_color, button_rect_2)
     else:
         pygame.draw.rect(screen, color, button_rect_2)
-
     screen.blit(settings_icon_resized, settings_icon_rect.topleft)
     screen.blit(button_text, button_text_rect)
 
@@ -266,7 +261,6 @@ def menu_buttons():
         pygame.draw.rect(screen, cursor_color, button_rect_3)
     else:
         pygame.draw.rect(screen, color, button_rect_3)
-
     screen.blit(tutorial_icon_resized, tutorial_icon_rect.topleft)
     screen.blit(button_text, button_text_rect)
 
@@ -274,7 +268,6 @@ def menu_buttons():
     leaderboard_icon = pygame.image.load('pics/leaderboard_icon.png')
     position = (Width // 2 - 150, Height // 3 + 210)
     size = (300, 50)
-
     button_text = button_font.render("View Rankings", True, (255, 255, 255))
     button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 235))
     leaderboard_icon_resized = pygame.transform.scale(leaderboard_icon, icon_size)
@@ -284,59 +277,62 @@ def menu_buttons():
     button_rect_4 = pygame.Rect(position, size) # RECTANGLE DEFINED
 
     if button_rect_4.collidepoint(mouse):
-        pygame.draw.rect(screen, cursor_color, button_rect_4)  # Change color when cursor hovered over
+        pygame.draw.rect(screen, cursor_color, button_rect_4)
     else:
-        pygame.draw.rect(screen, color, button_rect_4) # stay original color if cursor not hovering over
+        pygame.draw.rect(screen, color, button_rect_4)
 
-    screen.blit(leaderboard_icon_resized, leaderboard_icon_rect.topleft)  # Draw the icon
+    screen.blit(leaderboard_icon_resized, leaderboard_icon_rect.topleft)
     screen.blit(button_text, button_text_rect)
 
-    # --- BUTTON 5: Subreddit News (NEW BUTTON) ---
+    # --- BUTTON 5 (NEW): Subreddit News ---
     news_icon = pygame.image.load('pics/news_icon.png')
     # Position: One button height + spacing (50+10=60) below the leaderboard button (210 + 60 = 270)
     position = (Width // 2 - 150, Height // 3 + 270) 
     size = (300, 50)
 
     button_text = button_font.render("Subreddit News", True, (255, 255, 255))
-    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 295)) # Center Y: 270 + 25 = 295
+    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 295)) 
     news_icon_resized = pygame.transform.scale(news_icon, icon_size)
     news_icon_rect = news_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 270 + (button_height - icon_size[1]) // 2))
     
-    button_rect_6 = pygame.Rect(position, size) # RECTANGLE DEFINED
-
-    if button_rect_6.collidepoint(mouse):
-        pygame.draw.rect(screen, cursor_color, button_rect_6)
-    else:
-        pygame.draw.rect(screen, color, button_rect_6)
-
-    screen.blit(news_icon_resized, news_icon_rect.topleft)
-    screen.blit(button_text, button_text_rect)
-
-
-    # --- BUTTON 6: Customize Board ---
-    board_icon = pygame.image.load('pics/colorwheel_icon.png')
-    # Position: One button height + spacing (50+10=60) below the news button (270 + 60 = 330)
-    position = (Width // 2 - 150, Height // 3 + 330) 
-    size = (300, 50)
-
-    button_text = button_font.render("Customize Board", True, (255, 255, 255))
-    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 355)) # Center Y: 330 + 25 = 355
-    board_icon_resized = pygame.transform.scale(board_icon, icon_size)
-    board_icon_rect = board_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 330 + (button_height - icon_size[1]) // 2))
-
-    button_rect_5 = pygame.Rect(position, size) # RECTANGLE DEFINED
+    # *** SWAPPED NAME: This is now button_rect_5 ***
+    button_rect_5 = pygame.Rect(position, size) 
 
     if button_rect_5.collidepoint(mouse):
         pygame.draw.rect(screen, cursor_color, button_rect_5)
     else:
         pygame.draw.rect(screen, color, button_rect_5)
 
+    screen.blit(news_icon_resized, news_icon_rect.topleft)
+    screen.blit(button_text, button_text_rect)
+
+
+    # --- BUTTON 6 (OLD 5): Customize Board ---
+    board_icon = pygame.image.load('pics/colorwheel_icon.png')
+    # Position: One button height + spacing (50+10=60) below the news button (270 + 60 = 330)
+    position = (Width // 2 - 150, Height // 3 + 330) 
+    size = (300, 50)
+
+    button_text = button_font.render("Customize Board", True, (255, 255, 255))
+    button_text_rect = button_text.get_rect(center=(Width // 2, Height // 3 + 355))
+    board_icon_resized = pygame.transform.scale(board_icon, icon_size)
+    board_icon_rect = board_icon_resized.get_rect(topleft=(Width // 2 - 150 + 10, Height // 3 + 330 + (button_height - icon_size[1]) // 2))
+
+    # *** SWAPPED NAME: This is now button_rect_6 ***
+    button_rect_6 = pygame.Rect(position, size) 
+
+    if button_rect_6.collidepoint(mouse):
+        pygame.draw.rect(screen, cursor_color, button_rect_6)
+    else:
+        pygame.draw.rect(screen, color, button_rect_6)
+
     screen.blit(board_icon_resized, board_icon_rect.topleft)
     screen.blit(button_text, button_text_rect)
 
-    # Ensure the returned order is correct:
-    return button_rect, button_rect_2, button_rect_3, button_rect_4, button_rect_6, button_rect_5
+    # Return statement updated to put the Customize button (rect_6) last
+    return button_rect, button_rect_2, button_rect_3, button_rect_4, button_rect_5, button_rect_6
     #                                                    ^ Leaderboard ^ News ^ Customize
+
 
 def tutorial(): 
     """
